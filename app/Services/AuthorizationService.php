@@ -12,17 +12,17 @@ class AuthorizationService
     {
         try {
             $response = Http::timeout(10)->get(env('AUTHORIZATION_URL'));
-            
+
             if ($response->successful()) {
-                return $response->json('message') === 'Autorizado';
+                return $response->json('status') === 'success' &&
+                    $response->json('data')['authorization'] === true;
             }
-            
+
             Log::error('Authorization service failed', [
                 'status' => $response->status(),
                 'response' => $response->body()
             ]);
             return false;
-            
         } catch (\Exception $e) {
             Log::error('Authorization service exception', [
                 'error' => $e->getMessage()
@@ -31,5 +31,3 @@ class AuthorizationService
         }
     }
 }
-
-

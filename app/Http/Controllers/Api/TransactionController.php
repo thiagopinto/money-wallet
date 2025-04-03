@@ -14,17 +14,16 @@ class TransactionController extends Controller
         private TransactionService $transactionService
     ) {}
 
-    public function transfer(TransactionRequest $request): JsonResponse
+    public function transactions(TransactionRequest $request): JsonResponse
     {
         try {
             $transaction = $this->transactionService->transfer($request->validated());
-            
+
             return response()->json([
                 'success' => true,
                 'data' => new TransactionResource($transaction),
                 'message' => 'Transferência realizada com sucesso'
             ], 201);
-            
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

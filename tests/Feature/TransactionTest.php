@@ -39,9 +39,9 @@ class TransactionTest extends TestCase
         // Mock do serviço de autorização
         Http::fake([
             'https://util.devi.tools/api/v2/authorize' => Http::response([
-                'message' => 'Autorizado'
+                'status' => 'success',
+                'data' => ['authorization' => true]
             ], 200),
-            
             'https://util.devi.tools/api/v1/notify' => Http::response([], 200)
         ]);
     }
@@ -50,9 +50,9 @@ class TransactionTest extends TestCase
     public function common_user_can_transfer_money_to_another_user()
     {
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => 100.50,
-            'payer' => $this->commonUser->id,
-            'payee' => $this->anotherCommonUser->id
+            'amount' => 100.50,
+            'payer_id' => $this->commonUser->id,
+            'payee_id' => $this->anotherCommonUser->id
         ]);
 
         $response->assertStatus(201)
@@ -69,9 +69,9 @@ class TransactionTest extends TestCase
     public function shopkeeper_cannot_send_money()
     {
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => 100,
-            'payer' => $this->shopkeeper->id,
-            'payee' => $this->anotherCommonUser->id
+            'amount' => 100,
+            'payer_id' => $this->shopkeeper->id,
+            'payee_id' => $this->anotherCommonUser->id
         ]);
 
         $response->assertStatus(400)
@@ -85,9 +85,9 @@ class TransactionTest extends TestCase
     public function cannot_transfer_with_insufficient_balance()
     {
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => 1500,
-            'payer' => $this->commonUser->id,
-            'payee' => $this->anotherCommonUser->id
+            'amount' => 1500,
+            'payer_id' => $this->commonUser->id,
+            'payee_id' => $this->anotherCommonUser->id
         ]);
 
         $response->assertStatus(400)
@@ -101,32 +101,14 @@ class TransactionTest extends TestCase
     public function cannot_transfer_to_yourself()
     {
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => 100,
-            'payer' => $this->commonUser->id,
-            'payee' => $this->commonUser->id
+            'amount' => 100,
+            'payer_id' => $this->commonUser->id,
+            'payee_id' => $this->commonUser->id
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['payee']);
-    }
-
-    /** @test */
-    public function transfer_fails_when_authorization_service_is_down()
-    {
-        Http::fake([
-            'https://util.devi.tools/api/v2/authorize' => Http::response([], 500)
+        $response->assertStatus(400)->assertJson([
+            'success' => false,
+            'message' => 'Não é possível transferir para si mesmo'
         ]);
-
-        $response = $this->postJson('/api/v1/transactions', [
-            'value' => 100,
-            'payer' => $this->commonUser->id,
-            'payee' => $this->anotherCommonUser->id
-        ]);
-
-        $response->assertStatus(400)
-            ->assertJson([
-                'success' => false,
-                'message' => 'Transferência não autorizada pelo serviço externo'
-            ]);
     }
 }

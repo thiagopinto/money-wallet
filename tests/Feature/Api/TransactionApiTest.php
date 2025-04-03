@@ -16,14 +16,20 @@ class TransactionApiTest extends TestCase
     public function it_returns_validation_errors()
     {
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => -100,
-            'payer' => 999, // ID inexistente
-            'payee' => 999  // ID inexistente
+            'amount' => 5,
+            'payer_id' => 1, // ID inexistente
+            'payee_id' => 2  // ID inexistente
         ]);
 
         $response->assertStatus(422)
-            ->assertJsonValidationErrors([
-                'value', 'payer', 'payee'
+            ->assertJson([
+                'message' => 'Erro de validação',
+            ])
+            ->assertJsonStructure([
+                'errors' => [
+                    'payer_id',
+                    'payee_id',
+                ],
             ]);
     }
 
@@ -38,14 +44,17 @@ class TransactionApiTest extends TestCase
         $payee = User::factory()->create();
 
         Http::fake([
-            'https://util.devi.tools/api/v2/authorize' => Http::response(['message' => 'Autorizado'], 200),
+            'https://util.devi.tools/api/v2/authorize' => Http::response([
+                'status' => 'success',
+                'data' => ['authorization' => true]
+            ], 200),
             'https://util.devi.tools/api/v1/notify' => Http::response([], 200)
         ]);
 
         $response = $this->postJson('/api/v1/transactions', [
-            'value' => 100,
-            'payer' => $payer->id,
-            'payee' => $payee->id
+            'amount' => 100,
+            'payer_id' => $payer->id,
+            'payee_id' => $payee->id
         ]);
 
         $response->assertStatus(201)

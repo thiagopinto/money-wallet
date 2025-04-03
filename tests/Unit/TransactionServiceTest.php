@@ -34,9 +34,9 @@ class TransactionServiceTest extends TestCase
         ]);
 
         $transaction = $this->service->transfer([
-            'value' => 100,
-            'payer' => $payer->id,
-            'payee' => $payee->id
+            'amount' => 100,
+            'payer_id' => $payer->id,
+            'payee_id' => $payee->id
         ]);
 
         $this->assertEquals(900, $payer->fresh()->balance);
@@ -59,9 +59,9 @@ class TransactionServiceTest extends TestCase
         $payee = User::factory()->create();
 
         $this->service->transfer([
-            'value' => 100,
-            'payer' => $payer->id,
-            'payee' => $payee->id
+            'amount' => 100,
+            'payer_id' => $payer->id,
+            'payee_id' => $payee->id
         ]);
     }
 

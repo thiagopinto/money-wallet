@@ -20,17 +20,17 @@ class TransactionService
     public function transfer(array $data): Transaction
     {
         return DB::transaction(function () use ($data) {
-            $payer = User::findOrFail($data['payer']);
-            $payee = User::findOrFail($data['payee']);
+            $payer = User::findOrFail($data['payer_id']);
+            $payee = User::findOrFail($data['payee_id']);
 
-            $this->validateTransfer($payer, $payee, $data['value']);
+            $this->validateTransfer($payer, $payee, $data['amount']);
 
             if (!$this->authorizationService->checkAuthorization()) {
                 throw new \Exception('Transferência não autorizada pelo serviço externo');
             }
 
-            $payer->balance -= $data['value'];
-            $payee->balance += $data['value'];
+            $payer->balance -= $data['amount'];
+            $payee->balance += $data['amount'];
 
             $payer->save();
             $payee->save();
@@ -38,11 +38,11 @@ class TransactionService
             $transaction = Transaction::create([
                 'payer_id' => $payer->id,
                 'payee_id' => $payee->id,
-                'amount' => $data['value'],
+                'amount' => $data['amount'],
                 'status' => TransactionStatus::COMPLETED->value
             ]);
 
-            ProcessNotificationJob::dispatch($payee, $data['value']);
+            ProcessNotificationJob::dispatch($payee, $data['amount']);
 
             return $transaction;
         });
