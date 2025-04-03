@@ -3,9 +3,9 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use App\Enums\UserType;
 
-return new class extends Migration
-{
+return new class () extends Migration {
     /**
      * Run the migrations.
      */
@@ -19,6 +19,9 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            $table->string('cpf')->unique();
+            $table->enum('user_type', UserType::values())->default(UserType::COMMON->value);
+            $table->decimal('balance', 10, 2)->default(0.00);
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
